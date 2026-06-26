@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#060D1A">
+
+    <TextView
+        android:id="@+id/splashTitle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Treasure Coast Intelligence"
+        android:textColor="#5ED8CC"
+        android:textSize="28sp"
+        android:fontFamily="serif"
+        android:textStyle="italic"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@+id/splashSub"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintVertical_chainStyle="packed"
+        android:layout_marginBottom="12dp" />
+
+    <TextView
+        android:id="@+id/splashSub"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="ST. LUCIE · MARTIN · INDIAN RIVER"
+        android:textColor="#4A6080"
+        android:textSize="11sp"
+        android:letterSpacing="0.2"
+        app:layout_constraintTop_toBottomOf="@+id/splashTitle"
+        app:layout_constraintBottom_toTopOf="@+id/splashProgress"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginBottom="32dp" />
+
+    <ProgressBar
+        android:id="@+id/splashProgress"
+        style="@android:style/Widget.ProgressBar.Horizontal"
+        android:layout_width="200dp"
+        android:layout_height="2dp"
+        android:indeterminate="true"
+        android:progressTint="#2ABFB0"
+        android:indeterminateTint="#2ABFB0"
+        app:layout_constraintTop_toBottomOf="@+id/splashSub"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

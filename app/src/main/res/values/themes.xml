@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <style name="Theme.TreasureCoast" parent="Theme.AppCompat.NoActionBar">
+        <item name="android:windowBackground">#060D1A</item>
+        <item name="android:statusBarColor">#060D1A</item>
+        <item name="android:navigationBarColor">#060D1A</item>
+        <item name="colorPrimary">#2ABFB0</item>
+        <item name="colorPrimaryDark">#060D1A</item>
+        <item name="colorAccent">#2ABFB0</item>
+    </style>
+
+    <style name="Theme.TreasureCoast.Splash" parent="Theme.TreasureCoast">
+        <item name="android:windowFullscreen">true</item>
+    </style>
+</resources>

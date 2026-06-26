@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Treasure Coast Intelligence</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  :root {
+    --teal: #2ABFB0; --teal-light: #5ED8CC;
+    --gold: #C9A84C; --gold-light: #E8C97E;
+    --coral: #E8823A; --amber: #D4A017;
+    --violet: #8B5CF6; --red: #EF4444; --green: #10B981;
+    --bg: #060D1A; --bg2: #0B1525; --bg3: #0F1E35;
+    --border: #1A2E4A; --text: #EDF2F7; --text2: #94A3B8; --text3: #4A6080;
+  }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, 'Montserrat', system-ui, sans-serif;
+    height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+  }
+
+  /* ── Header ── */
+  .header {
+    height: 52px; background: var(--bg2); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; padding: 0 16px; gap: 12px; flex-shrink: 0;
+    position: relative; z-index: 100;
+  }
+  .header-emblem {
+    width: 32px; height: 32px; border: 1.5px solid var(--teal);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; color: var(--teal); flex-shrink: 0;
+  }
+  .header-title { font-size: 14px; font-weight: 600; color: var(--teal-light); flex: 1; }
+  .header-sub { font-size: 9px; color: var(--text3); letter-spacing: 0.1em; text-transform: uppercase; }
+  .hamburger-btn {
+    width: 36px; height: 36px; background: var(--bg3); border: 1px solid var(--border);
+    border-radius: 8px; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 5px; cursor: pointer; flex-shrink: 0;
+  }
+  .hamburger-btn span {
+    display: block; width: 18px; height: 2px; background: var(--teal); border-radius: 2px;
+    transition: all 0.3s;
+  }
+
+  /* ── Drawer Menu ── */
+  .drawer-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.6);
+    z-index: 200; opacity: 0; pointer-events: none; transition: opacity 0.25s;
+  }
+  .drawer-overlay.open { opacity: 1; pointer-events: all; }
+  .drawer {
+    position: fixed; top: 0; right: -280px; bottom: 0; width: 280px;
+    background: var(--bg2); border-left: 1px solid var(--border);
+    z-index: 201; transition: right 0.25s ease; overflow-y: auto;
+    display: flex; flex-direction: column;
+  }
+  .drawer.open { right: 0; }
+  .drawer-header {
+    padding: 20px 16px 12px; border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .drawer-title { font-size: 13px; font-weight: 600; color: var(--teal-light); letter-spacing: 0.05em; }
+  .drawer-close {
+    width: 28px; height: 28px; border-radius: 6px; background: var(--bg3);
+    border: 1px solid var(--border); color: var(--text2); cursor: pointer;
+    display: flex; align-items: center; justify-content: center; font-size: 16px;
+  }
+  .drawer-section-label {
+    padding: 14px 16px 6px; font-size: 9px; letter-spacing: 0.15em;
+    text-transform: uppercase; color: var(--text3); font-weight: 600;
+  }
+  .drawer-item {
+    display: flex; align-items: center; gap: 12px; padding: 12px 16px;
+    cursor: pointer; border-radius: 0; transition: background 0.15s;
+    border-left: 3px solid transparent;
+  }
+  .drawer-item:hover { background: var(--bg3); }
+  .drawer-item.active {
+    background: rgba(42,191,176,0.08); border-left-color: var(--teal);
+  }
+  .drawer-item-icon { font-size: 20px; width: 28px; text-align: center; flex-shrink: 0; }
+  .drawer-item-text { flex: 1; }
+  .drawer-item-label { font-size: 13px; font-weight: 500; color: var(--text); }
+  .drawer-item-sub { font-size: 10px; color: var(--text3); margin-top: 2px; }
+  .drawer-item.active .drawer-item-label { color: var(--teal-light); }
+  .drawer-divider { height: 1px; background: var(--border); margin: 6px 0; }
+
+  /* ── Current page indicator in header ── */
+  .header-page-indicator {
+    font-size: 10px; color: var(--text3); letter-spacing: 0.08em;
+    text-transform: uppercase; white-space: nowrap; overflow: hidden;
+    text-overflow: ellipsis; max-width: 140px;
+  }
+
+  /* ── Content area ── */
+  .content { flex: 1; overflow-y: auto; -webkit-overflow-scrolling: touch; position: relative; }
+  .page { display: none; padding: 16px; }
+  .page.active { display: block; }
+
+  /* ── Hero ── */
+  .page-hero { margin-bottom: 16px; }
+  .hero-eyebrow { font-size: 9px; letter-spacing: 0.15em; color: var(--teal); text-transform: uppercase; margin-bottom: 6px; }
+  .hero-title { font-size: 22px; font-weight: 300; line-height: 1.2; margin-bottom: 8px; }
+  .hero-title span { color: var(--teal-light); font-style: italic; }
+  .hero-desc { font-size: 11px; color: var(--text2); line-height: 1.6; }
+
+  /* ── KPI Strip ── */
+  .kpi-strip { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-bottom: 16px; }
+  .kpi-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
+  .kpi-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 4px; }
+  .kpi-val { font-size: 16px; font-weight: 700; font-family: 'Courier New', monospace; }
+  .kpi-sub { font-size: 9px; color: var(--text3); margin-top: 2px; }
+  .kpi-val.teal { color: var(--teal-light); }
+  .kpi-val.gold { color: var(--gold); }
+  .kpi-val.green { color: var(--green); }
+  .kpi-val.red { color: var(--red); }
+  .kpi-val.violet { color: var(--violet); }
+  .kpi-val.amber { color: var(--amber); }
+
+  /* ── Charts ── */
+  .chart-section { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+  .chart-title { font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+  .chart-sub { font-size: 9px; color: var(--text3); margin-bottom: 10px; }
+  .chart-wrap { position: relative; height: 200px; }
+
+  /* ── Filter ── */
+  .filter-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 12px; margin-bottom: 12px; }
+  .filter-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); margin-bottom: 4px; display: block; }
+  .filter-input { width: 100%; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; color: var(--text); padding: 8px 10px; font-size: 13px; margin-bottom: 8px; }
+  .filter-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px; }
+  .filter-actions { display: flex; gap: 8px; }
+  .btn-apply { flex: 1; padding: 9px; background: var(--teal); border: none; border-radius: 6px; color: #000; font-weight: 600; font-size: 12px; cursor: pointer; }
+  .btn-clear { padding: 9px 16px; background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; color: var(--text2); font-size: 12px; cursor: pointer; }
+
+  /* ── Table ── */
+  .table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin-top: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  th { background: var(--bg3); color: var(--text3); font-weight: 500; padding: 8px 6px; text-align: left; white-space: nowrap; font-size: 9px; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid var(--border); }
+  td { padding: 8px 6px; border-bottom: 1px solid rgba(26,46,74,0.5); vertical-align: top; }
+  tr:hover td { background: var(--bg3); }
+
+  /* ── Match Card ── */
+  .match-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+  .match-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+  .match-owner { font-size: 13px; font-weight: 600; color: var(--teal-light); margin-bottom: 2px; }
+  .match-address { font-size: 11px; color: var(--text2); }
+  .match-score-badge { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .match-score-badge.hot { background: rgba(239,68,68,0.2); color: var(--red); border: 1px solid rgba(239,68,68,0.3); }
+  .match-score-badge.warm { background: rgba(212,160,23,0.2); color: var(--amber); border: 1px solid rgba(212,160,23,0.3); }
+  .match-score-badge.mod { background: rgba(42,191,176,0.1); color: var(--teal); border: 1px solid rgba(42,191,176,0.2); }
+  .match-metrics { display: grid; grid-template-columns: repeat(4,1fr); gap: 6px; margin-bottom: 10px; }
+  .match-metric { background: var(--bg3); border-radius: 6px; padding: 6px; text-align: center; }
+  .match-metric-label { font-size: 8px; color: var(--text3); text-transform: uppercase; margin-bottom: 3px; }
+  .match-metric-val { font-size: 12px; font-weight: 700; font-family: 'Courier New', monospace; }
+  .match-buyers-label { font-size: 9px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--text3); margin-bottom: 6px; }
+  .match-buyer-row { display: flex; align-items: center; gap-8px; padding: 6px 0; border-top: 1px solid rgba(26,46,74,0.5); }
+  .match-buyer-score { width: 32px; height: 32px; border-radius: 50%; background: rgba(42,191,176,0.15); border: 1px solid rgba(42,191,176,0.3); display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: var(--teal); flex-shrink: 0; margin-right: 8px; }
+  .match-buyer-name { font-size: 12px; font-weight: 500; }
+  .match-buyer-meta { font-size: 10px; color: var(--text3); }
+
+  /* ── Radar Card ── */
+  .radar-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 10px; border-left: 3px solid var(--border); }
+  .radar-card.hot { border-left-color: var(--red); }
+  .radar-card.warm { border-left-color: var(--amber); }
+  .radar-card.mod { border-left-color: var(--teal); }
+  .radar-card-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+  .radar-owner { font-size: 13px; font-weight: 600; margin-bottom: 2px; }
+  .radar-address { font-size: 11px; color: var(--text2); }
+  .radar-metrics { display: grid; grid-template-columns: repeat(3,1fr); gap: 6px; margin-bottom: 8px; }
+  .radar-metric { background: var(--bg3); border-radius: 6px; padding: 6px; }
+  .radar-metric-label { font-size: 8px; color: var(--text3); text-transform: uppercase; margin-bottom: 2px; }
+  .radar-metric-val { font-size: 12px; font-weight: 700; font-family: 'Courier New', monospace; }
+  .radar-reasons { font-size: 10px; color: var(--text3); line-height: 1.5; }
+
+  /* ── Pagination ── */
+  .pagination { display: flex; align-items: center; justify-content: center; gap: 6px; padding: 12px 0; flex-wrap: wrap; }
+  .page-btn { padding: 6px 12px; background: var(--bg2); border: 1px solid var(--border); border-radius: 4px; color: var(--text2); font-size: 12px; cursor: pointer; }
+  .page-btn.active { background: var(--teal); border-color: var(--teal); color: #000; font-weight: 600; }
+  .page-info { font-size: 11px; color: var(--text3); text-align: center; padding: 4px 0; }
+
+  /* ── Loading ── */
+  .loading { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 40px; gap: 12px; color: var(--text3); font-size: 12px; }
+  .spinner { width: 28px; height: 28px; border: 3px solid var(--border); border-top-color: var(--teal); border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-emblem">TC</div>
+  <div style="flex:1">
+    <div class="header-title">Treasure Coast Intelligence</div>
+    <div class="header-page-indicator" id="pageIndicator">St. Lucie · Market Report</div>
+  </div>
+  <div class="hamburger-btn" onclick="openDrawer()">
+    <span></span><span></span><span></span>
+  </div>
+</div>
+
+<!-- Drawer Overlay -->
+<div class="drawer-overlay" id="drawerOverlay" onclick="closeDrawer()"></div>
+
+<!-- Drawer Menu -->
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div class="drawer-title">NAVIGATION</div>
+    <div class="drawer-close" onclick="closeDrawer()">✕</div>
+  </div>
+
+  <div class="drawer-section-label">St. Lucie County</div>
+  <div class="drawer-item active" data-page="slreport" onclick="navTo('slreport')">
+    <div class="drawer-item-icon">📊</div>
+    <div class="drawer-item-text">
+      <div class="drawer-item-label">Market Report</div>
+      <div class="drawer-item-sub">Price trends · Out-of-state buyers · S/R levels</div>
+    </div>
+  </div>
+  <div class="drawer-item" data-page="slsales" onclick="navTo('slsales')">
+    <div class="drawer-item-icon">🏠</div>
+    <div class="drawer-item-text">
+      <div class="drawer-item-label">Sales Registry</div>
+      <div class="drawer-item-sub">Search 20,000 single family transactions</div>
+    </div>
+  </div>
+
+  <div class="drawer-divider"></div>
+  <div class="drawer-section-label">Martin County</div>
+  <div class="drawer-item" data-page="martinreport" onclick="navTo('martinreport')">
+    <div class="drawer-item-icon">📈</div>
+    <div class="drawer-item-text">
+      <div class="drawer-item-label">Market Report</div>
+      <div class="drawer-item-sub">30-year cycle · Stress index · CRA data</div>
+    </div>
+  </div>
+  <div class="drawer-item" data-page="matchmaker" onclick="navTo('matchmaker')">
+    <div class="drawer-item-icon">⟷</div>
+    <div class="drawer-item-text">
+      <div class="drawer-item-label">Buyer-Seller Matchmaker</div>
+      <div class="drawer-item-sub">Motivated sellers matched to active buyers</div>
+    </div>
+  </div>
+  <div class="drawer-item" data-page="radar" onclick="navTo('radar')">
+    <div class="drawer-item-icon">🎯</div>
+    <div class="drawer-item-text">
+      <div class="drawer-item-label">Motivated Seller Radar</div>
+      <div class="drawer-item-sub">7,546 peak buyers still holding · Scored</div>
+    </div>
+  </div>
+  <div class="drawer-item" data-page="fliptracker" onclick="navTo('fliptracker')">
+    <div class="drawer-item-icon">⚡</div>
+    <div class="drawer-item-text">
+      <div class="drawer-item-label">Flip Tracker</div>
+      <div class="drawer-item-sub">22,031 verified flip pairs · Hold periods</div>
+    </div>
+  </div>
+
+  <div class="drawer-divider"></div>
+  <div class="drawer-section-label">Indian River County</div>
+  <div class="drawer-item" data-page="indianriver" onclick="navTo('indianriver')">
+    <div class="drawer-item-icon">🌊</div>
+    <div class="drawer-item-text">
+      <div class="drawer-item-label">IR County</div>
+      <div class="drawer-item-sub">65 years · 109,500 flip pairs · Vero Beach</div>
+    </div>
+  </div>
+
+  <div class="drawer-divider"></div>
+  <div class="drawer-section-label">Regional</div>
+  <div class="drawer-item" data-page="entityintel" onclick="navTo('entityintel')">
+    <div class="drawer-item-icon">🔍</div>
+    <div class="drawer-item-text">
+      <div class="drawer-item-label">Entity Intelligence</div>
+      <div class="drawer-item-sub">26,391 LLCs · 5-county network</div>
+    </div>
+  </div>
+</div>
+
+<!-- Content -->
+<div class="content">
+
+  <!-- SL Market Report -->
+  <div class="page active" id="page-slreport">
+    <div class="page-hero">
+      <div class="hero-eyebrow">St. Lucie County · Florida</div>
+      <h1 class="hero-title">Single Family <span>Market Intelligence</span></h1>
+      <div class="hero-desc">20,000 transactions · 2023–2026 · Port St. Lucie & Fort Pierce</div>
+    </div>
+    <div class="kpi-strip" id="sl-kpis">
+      <div class="kpi-card"><div class="kpi-label">Total Sales</div><div class="kpi-val teal" id="sl-total">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Avg Price</div><div class="kpi-val gold" id="sl-avg">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Peak Quarter</div><div class="kpi-val amber" id="sl-peak">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">2026 Trend</div><div class="kpi-val red" id="sl-trend">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">OOS Buyers</div><div class="kpi-val violet" id="sl-oos">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Parcels</div><div class="kpi-val teal" id="sl-parcels">—</div></div>
+    </div>
+    <div class="chart-section">
+      <div class="chart-title">Quarterly Price Trend</div>
+      <div class="chart-sub">Avg sale price by quarter 2023–2026</div>
+      <div class="chart-wrap"><canvas id="chart-sl-price"></canvas></div>
+    </div>
+    <div class="chart-section">
+      <div class="chart-title">Out-of-State Buyers</div>
+      <div class="chart-sub">Top origin states by transaction count</div>
+      <div class="chart-wrap"><canvas id="chart-oos"></canvas></div>
+    </div>
+  </div>
+
+  <!-- SL Sales Registry -->
+  <div class="page" id="page-slsales">
+    <div class="page-hero">
+      <div class="hero-eyebrow">St. Lucie County</div>
+      <h1 class="hero-title">Sales <span>Registry</span></h1>
+    </div>
+    <div class="filter-card">
+      <label class="filter-label">Owner / Grantee Name</label>
+      <input type="text" class="filter-input" id="sl-name" placeholder="Search owner name...">
+      <label class="filter-label">Street Address</label>
+      <input type="text" class="filter-input" id="sl-address" placeholder="Search address...">
+      <div class="filter-actions">
+        <button class="btn-apply" onclick="loadSLSales(1)">Search</button>
+        <button class="btn-clear" onclick="clearSLSales()">Clear</button>
+      </div>
+    </div>
+    <div class="page-info" id="sl-sales-info"></div>
+    <div class="table-wrap">
+      <table><thead><tr><th>Owner</th><th>Address</th><th>Price</th><th>Date</th><th>Sq Ft</th></tr></thead>
+      <tbody id="sl-sales-body"></tbody></table>
+    </div>
+    <div class="pagination" id="sl-sales-pages"></div>
+  </div>
+
+  <!-- Martin Report -->
+  <div class="page" id="page-martinreport">
+    <div class="page-hero">
+      <div class="hero-eyebrow">Martin County · Florida</div>
+      <h1 class="hero-title">Martin County <span>Market Intelligence</span></h1>
+      <div class="hero-desc">473,616 transactions · 1997–2025 · 30-year cycle analysis</div>
+    </div>
+    <div class="kpi-strip">
+      <div class="kpi-card"><div class="kpi-label">Total Txn</div><div class="kpi-val teal" id="martin-total">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Peak Drop</div><div class="kpi-val red" id="martin-drop">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Recovery</div><div class="kpi-val green" id="martin-recovery">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">2024 Avg</div><div class="kpi-val gold" id="martin-avg">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Stress 2025</div><div class="kpi-val red" id="martin-stress">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Parcels</div><div class="kpi-val teal" id="martin-parcels">—</div></div>
+    </div>
+    <div class="chart-section">
+      <div class="chart-title">30-Year Market Cycle</div>
+      <div class="chart-sub">Annual WD transactions & avg price 1997–2025</div>
+      <div class="chart-wrap"><canvas id="chart-martin-annual"></canvas></div>
+    </div>
+    <div class="chart-section">
+      <div class="chart-title">Deed Type Composition</div>
+      <div class="chart-sub">WD vs QC vs CT 2020–2025</div>
+      <div class="chart-wrap"><canvas id="chart-martin-deed"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Matchmaker -->
+  <div class="page" id="page-matchmaker">
+    <div class="page-hero">
+      <div class="hero-eyebrow">Martin County · Buyer-Seller Intelligence</div>
+      <h1 class="hero-title">Buyer-Seller <span>Matchmaker</span></h1>
+      <div class="hero-desc">Motivated sellers matched to active buyers · Scored by price tier, geography & recency</div>
+    </div>
+    <div class="kpi-strip">
+      <div class="kpi-card"><div class="kpi-label">Sellers</div><div class="kpi-val red" id="mm-sellers">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Hot (80+)</div><div class="kpi-val amber" id="mm-hot">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Buyers</div><div class="kpi-val teal" id="mm-buyers">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Hot Buyers</div><div class="kpi-val green" id="mm-hot-buyers">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Entities</div><div class="kpi-val violet" id="mm-entities">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Active 6mo</div><div class="kpi-val gold" id="mm-recent">—</div></div>
+    </div>
+    <div class="filter-card">
+      <label class="filter-label">Filter by City</label>
+      <input type="text" class="filter-input" id="mm-city" placeholder="e.g. Stuart, Palm City...">
+      <label class="filter-label">Search Owner / Address</label>
+      <input type="text" class="filter-input" id="mm-search" placeholder="Owner name or address...">
+      <div class="filter-actions">
+        <button class="btn-apply" onclick="loadMatchmaker(1)">Search</button>
+        <button class="btn-clear" onclick="clearMatchmaker()">Clear</button>
+      </div>
+    </div>
+    <div class="page-info" id="mm-info"></div>
+    <div id="mm-cards"></div>
+    <div class="pagination" id="mm-pages"></div>
+  </div>
+
+  <!-- Radar -->
+  <div class="page" id="page-radar">
+    <div class="page-hero">
+      <div class="hero-eyebrow">Martin County · 2021–2022 Peak Buyers</div>
+      <h1 class="hero-title">Motivated Seller <span>Radar</span></h1>
+      <div class="hero-desc">Every investor who bought at the peak and hasn't resold — scored by motivation level</div>
+    </div>
+    <div class="kpi-strip">
+      <div class="kpi-card"><div class="kpi-label">Candidates</div><div class="kpi-val teal" id="radar-total">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">HOT (80+)</div><div class="kpi-val red" id="radar-hot">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">WARM (60+)</div><div class="kpi-val amber" id="radar-warm">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Avg Price</div><div class="kpi-val gold" id="radar-price">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Avg Hold</div><div class="kpi-val violet" id="radar-hold">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Avg Premium</div><div class="kpi-val red" id="radar-premium">—</div></div>
+    </div>
+    <div class="filter-card">
+      <div class="filter-row">
+        <div>
+          <label class="filter-label">Min Score</label>
+          <select class="filter-input" id="radar-score">
+            <option value="40">All (40+)</option>
+            <option value="60">Warm (60+)</option>
+            <option value="80">HOT (80+)</option>
+          </select>
+        </div>
+        <div>
+          <label class="filter-label">City</label>
+          <input type="text" class="filter-input" id="radar-city" placeholder="e.g. Stuart...">
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn-apply" onclick="loadRadar(1)">Search</button>
+        <button class="btn-clear" onclick="clearRadar()">Clear</button>
+      </div>
+    </div>
+    <div class="page-info" id="radar-info"></div>
+    <div id="radar-cards"></div>
+    <div class="pagination" id="radar-pages"></div>
+  </div>
+
+  <!-- Flip Tracker -->
+  <div class="page" id="page-fliptracker">
+    <div class="page-hero">
+      <div class="hero-eyebrow">Martin County · Treasure Coast</div>
+      <h1 class="hero-title">Flip <span>Velocity Tracker</span></h1>
+      <div class="hero-desc">22,031 verified flip pairs · Hold periods · Gains · Serial flippers</div>
+    </div>
+    <div class="kpi-strip">
+      <div class="kpi-card"><div class="kpi-label">Total Flips</div><div class="kpi-val teal" id="flip-total">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Avg Gain</div><div class="kpi-val green" id="flip-avg-gain">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Avg Hold</div><div class="kpi-val gold" id="flip-avg-hold">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Avg $ Gain</div><div class="kpi-val amber" id="flip-avg-dollar">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Total Value</div><div class="kpi-val violet" id="flip-total-val">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Best Flip</div><div class="kpi-val green" id="flip-best">—</div></div>
+    </div>
+    <div class="filter-card">
+      <div class="filter-row">
+        <div>
+          <label class="filter-label">Year From</label>
+          <input type="number" class="filter-input" id="flip-year-from" value="2023" min="2015" max="2026">
+        </div>
+        <div>
+          <label class="filter-label">Year To</label>
+          <input type="number" class="filter-input" id="flip-year-to" value="2026" min="2015" max="2026">
+        </div>
+      </div>
+      <div class="filter-row">
+        <div>
+          <label class="filter-label">Min % Gain</label>
+          <input type="number" class="filter-input" id="flip-min-gain" placeholder="e.g. 20">
+        </div>
+        <div>
+          <label class="filter-label">Seller Name</label>
+          <input type="text" class="filter-input" id="flip-grantor" placeholder="Search seller...">
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button class="btn-apply" onclick="loadFlips(1)">Apply</button>
+        <button class="btn-clear" onclick="clearFlips()">Clear</button>
+      </div>
+    </div>
+    <div class="page-info" id="flip-info"></div>
+    <div class="table-wrap">
+      <table><thead><tr><th>Parcel</th><th>Buy</th><th>Sell</th><th>Gain%</th><th>Gain$</th><th>Days</th></tr></thead>
+      <tbody id="flip-body"></tbody></table>
+    </div>
+    <div class="pagination" id="flip-pages"></div>
+  </div>
+
+  <!-- Indian River -->
+  <div class="page" id="page-indianriver">
+    <div class="page-hero">
+      <div class="hero-eyebrow">Indian River County · Florida</div>
+      <h1 class="hero-title">IR County <span>Intelligence</span></h1>
+      <div class="hero-desc">448,398 warranty deeds · 65 years · 109,500 flip pairs · Vero Beach</div>
+    </div>
+    <div class="kpi-strip">
+      <div class="kpi-card"><div class="kpi-label">WD Sales</div><div class="kpi-val teal" id="ir-total">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">2025 Avg</div><div class="kpi-val green" id="ir-avg25">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Flip Pairs</div><div class="kpi-val violet" id="ir-flips">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Value Created</div><div class="kpi-val gold" id="ir-value">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Stress 2025</div><div class="kpi-val red" id="ir-stress">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Parcels</div><div class="kpi-val teal" id="ir-parcels">—</div></div>
+    </div>
+    <div class="chart-section">
+      <div class="chart-title">25-Year Market Cycle</div>
+      <div class="chart-sub">Annual WD transactions & avg price 2000–2026</div>
+      <div class="chart-wrap"><canvas id="chart-ir-annual"></canvas></div>
+    </div>
+    <div class="chart-section">
+      <div class="chart-title">Out-of-State Owners</div>
+      <div class="chart-sub">Top origin states · Northeast corridor dominates</div>
+      <div class="chart-wrap"><canvas id="chart-ir-oos"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Entity Intel -->
+  <div class="page" id="page-entityintel">
+    <div class="page-hero">
+      <div class="hero-eyebrow">5-County Network</div>
+      <h1 class="hero-title">Entity <span>Intelligence Network</span></h1>
+      <div class="hero-desc">26,391 entities · Sarasota · Manatee · St. Lucie · Lee · Pinellas</div>
+    </div>
+    <div class="kpi-strip">
+      <div class="kpi-card"><div class="kpi-label">Entities</div><div class="kpi-val teal" id="entity-total">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Multi-County</div><div class="kpi-val violet" id="entity-multi">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Total Txn</div><div class="kpi-val gold" id="entity-txn">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Volume</div><div class="kpi-val green" id="entity-vol">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">Builders</div><div class="kpi-val amber" id="entity-builders">—</div></div>
+      <div class="kpi-card"><div class="kpi-label">iBuyers</div><div class="kpi-val red" id="entity-ibuyers">—</div></div>
+    </div>
+    <div class="filter-card">
+      <label class="filter-label">Search Entity</label>
+      <input type="text" class="filter-input" id="entity-search" placeholder="Entity name...">
+      <div class="filter-actions">
+        <button class="btn-apply" onclick="loadEntities(1)">Search</button>
+        <button class="btn-clear" onclick="clearEntities()">Clear</button>
+      </div>
+    </div>
+    <div class="page-info" id="entity-info"></div>
+    <div class="table-wrap">
+      <table><thead><tr><th>Entity</th><th>Type</th><th>Counties</th><th>Txn</th><th>Vol $M</th></tr></thead>
+      <tbody id="entity-body"></tbody></table>
+    </div>
+    <div class="pagination" id="entity-pages"></div>
+  </div>
+
+</div><!-- end content -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
