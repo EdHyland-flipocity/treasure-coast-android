@@ -111,11 +111,14 @@ public class MainActivity extends AppCompatActivity {
 
     private void initializeDatabase() {
         File dbFile = getDbFile();
-        boolean needsDownload = !dbFile.exists() || dbFile.length() < 1000000;
-        boolean needsUpdate   = !needsDownload && shouldCheckForUpdate();
+        boolean hasValidDb    = dbFile.exists() && dbFile.length() > 100000000;
+        boolean needsDownload = !hasValidDb;
+        boolean needsUpdate   = hasValidDb && shouldCheckForUpdate();
+
+        Log.d(TAG, "DB check — exists: " + dbFile.exists() + " size: " + dbFile.length() + " needsDownload: " + needsDownload);
 
         if (needsDownload) {
-            Log.d(TAG, "No local DB — downloading from GitHub...");
+            Log.d(TAG, "No valid local DB — downloading from GitHub...");
             showSplashMessage("Downloading database...\nFirst launch may take 1-2 minutes on WiFi");
             downloadDatabase(dbFile, true);
         } else {
@@ -239,25 +242,25 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void fallbackToBundledDb(File dbFile) {
-        Log.d(TAG, "Falling back to bundled database...");
-        showSplashMessage("No internet connection.\nLoading bundled database...");
-        try {
-            InputStream in  = getAssets().open("db/treasure_coast.db");
-            OutputStream out = new FileOutputStream(dbFile);
-            byte[] buf = new byte[65536];
-            int len;
-            while ((len = in.read(buf)) > 0) out.write(buf, 0, len);
-            in.close();
-            out.close();
-            Log.d(TAG, "Bundled DB copied: " + dbFile.length() + " bytes");
-        } catch (Exception e2) {
-            Log.e(TAG, "Bundled DB copy failed: " + e2.getMessage());
+        Log.d(TAG, "Download failed — checking for existing DB");
+        if (dbFile.exists() && dbFile.length() > 100000000) {
+            Log.d(TAG, "Existing DB found: " + dbFile.length() + " bytes — using it");
+            showSplashMessage("No internet connection.\nUsing existing database...");
+            openDatabase(dbFile);
+            mainHandler.post(() -> {
+                hideSplash();
+                webView.loadUrl("file:///android_asset/www/index.html");
+            });
+        } else {
+            Log.e(TAG, "No usable DB found");
+            showSplashMessage("No database found.\nPlease connect to WiFi and relaunch the app.");
+            mainHandler.postDelayed(() -> {
+                mainHandler.post(() -> {
+                    hideSplash();
+                    webView.loadUrl("file:///android_asset/www/index.html");
+                });
+            }, 4000);
         }
-        openDatabase(dbFile);
-        mainHandler.post(() -> {
-            hideSplash();
-            webView.loadUrl("file:///android_asset/www/index.html");
-        });
     }
 
     private void checkForUpdateInBackground(File dbFile) {
