@@ -124,11 +124,11 @@ public class MainActivity extends AppCompatActivity {
         } else {
             openDatabase(dbFile);
             mainHandler.post(() -> {
+                hideSplash();
                 webView.loadUrl("file:///android_asset/www/index.html");
                 if (needsUpdate) {
                     checkForUpdateInBackground(dbFile);
                 }
-                // Show support card occasionally
                 if (shouldShowSupportCard()) {
                     mainHandler.postDelayed(() -> showSupportCard(), 3000);
                 }
